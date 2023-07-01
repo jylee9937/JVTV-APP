@@ -72,13 +72,13 @@ type testButtonProps = {
 }
 
 const TestButton = ({state, label, title} : testButtonProps) => {
-    const updateTaskStatus = async (roleID, task, newStatus) => {
+    const updateTaskStatus = async (roleID: string, task: string, newStatus: boolean) => {
         const fixedRolesDocRef = firebase.firestore().collection('rolesConfig').doc('fixedRoles');
         await fixedRolesDocRef.update({
             [`${roleID}.checklist.${task}`]: newStatus
         });
         
-        console.log(roleID, task, newStatus)
+        console.log(roleID, task, title)
     };
     console.log(state, label, title)
     
