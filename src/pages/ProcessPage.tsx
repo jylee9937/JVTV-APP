@@ -46,7 +46,7 @@ const getArray = (title: string) => {
 
 type roleDatType = {
     roleName: string;
-    checklist: string[];
+    checklist: {};
 }
 
 const setRolesData = async () => {
@@ -79,22 +79,14 @@ const setRolesData = async () => {
 type testButtonProps = {
     state: boolean;
     label: string;
-    title: string;
 }
 
-const TestButton = ({state, label, title} : testButtonProps) => {
-    const updateTaskStatus = useCallback(async (state: boolean) => {
-        const fixedRolesDocRef = firebase.firestore().collection('rolesConfig').doc('fixedRoles');
-        await fixedRolesDocRef.update({
-            [`${title}.checklist.${label}`]: state
-        });
-        console.log(state, label, title);
-    }, []);
+const TestButton = ({state, label} : testButtonProps) => {
     
     
     return(
         <div className="items-top flex space-x-2 px-[24px] py-[8px]">
-            <Checkbox id={label} defaultChecked={state} onCheckedChange={updateTaskStatus}/>
+            <Checkbox id={label} defaultChecked={state} disabled/>
             <div className="grid gap-1.5 leading-none">
                 <label
                     htmlFor={label}
@@ -107,24 +99,18 @@ const TestButton = ({state, label, title} : testButtonProps) => {
     )
 }
 
-
-
-type ArticleParams= {
-    title: string;
-};
-const DetailPage: ActivityComponentType<ArticleParams> = ({ params }) => {
+const ProcessPage: ActivityComponentType = () => {
     const [isLoading, setIsLoading] = useState(true);
-    const [checkList, setCheckList] = useState<string[]>([]);
-    const [stateList, setStateList] = useState<boolean[]>([]);
+    const [totalArr, setTotalArr] = useState<roleDatType[]>([]);
     
     const fetchData = async () => {
         const fixedRolesDoc = await firebase.firestore().collection('rolesConfig').doc('fixedRoles').get();
         const rolesData = fixedRolesDoc.data() as {}
-        const testArr = Object.values(rolesData) as roleDatType[];
-        const test = testArr.find((roleData) => roleData.roleName === params.title)?.checklist ?? []
-        console.log(test);
-        setCheckList(Object.keys(test));
-        setStateList(Object.values(test) as unknown as boolean[]);
+        const totalArr = Object.values(rolesData) as roleDatType[];
+        setTotalArr(totalArr);
+        // const test = testArr.find((roleData) => roleData.roleName === params.title)?.checklist ?? []
+        // setCheckList(Object.keys(test));
+        // setStateList(Object.values(test) as unknown as boolean[]);
         setIsLoading(false);
     };
     
@@ -136,28 +122,26 @@ const DetailPage: ActivityComponentType<ArticleParams> = ({ params }) => {
         return <div>로딩 중...</div>
     }
     
-    if(params.title === "김참이 팀장"){
-        return (
-            <AppScreen appBar={{ title: params.title }}>
-                <div className="flex flex-col gap-2">
-                    <Button onClick={setRolesData}>초기화</Button>
-                </div>
-            </AppScreen>
-        )
-    }
-    
     return (
-        <AppScreen appBar={{ title: params.title }}>
-            <div className="flex flex-col gap-2">
-                {checkList.map((label, index) => {
-                    console.log(label);
+        <AppScreen appBar={{ title: "전체 상황" }}>
+            <div className="flex gap-2">
+                {totalArr.map((roleData, index) => {
                     return (
-                        <TestButton state={stateList[index]}label={label} title={params.title}/>
+                        <div className="border-l-[1px]">
+                            <div>{roleData.roleName}</div>
+                            {Object.keys(roleData.checklist).map((item) => {
+                                return(
+                                    // @ts-ignore
+                                    <TestButton state={roleData.checklist[item]} label={item}/>
+                                )
+                            })}
+                        </div>
                     )
                 })}
             </div>
+            <Button onClick={setRolesData}>초기화 하기</Button>
         </AppScreen>
     );
 };
 
-export default DetailPage;
+export default ProcessPage;

@@ -3,7 +3,7 @@ import { AppScreen } from "@stackflow/plugin-basic-ui";
 import {useFlow} from "../StackFlow";
 import {Button} from "@/components/ui/button";
 
-const roleList = ["3캠", "4캠", "7캠", "8캠", "중계", "중계 서브", "자막", "말씀준비"];
+const roleList = ["3캠", "4캠", "7캠", "8캠", "중계", "중계 서브", "자막", "말씀준비", "김참이 팀장"];
 
 const MainPage: ActivityComponentType = () => {
     const { push } = useFlow();
@@ -12,6 +12,10 @@ const MainPage: ActivityComponentType = () => {
         push("DetailPage", {
             title: title,
         });
+    };
+    
+    const onClickProcess = () => {
+        push("ProcessPage", {});
     };
     
     return (
@@ -26,7 +30,7 @@ const MainPage: ActivityComponentType = () => {
                         {role+" 담당입니다"}
                     </Button>)}
                 </div>
-                <Button className="w-full mt-[24px]">
+                <Button className="w-full mt-[24px]" onClick={onClickProcess}>
                     전체 진행 상황 보기
                 </Button>
             </div>
