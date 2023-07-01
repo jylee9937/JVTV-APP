@@ -1,6 +1,8 @@
 import { ActivityComponentType } from "@stackflow/react";
 import { AppScreen } from "@stackflow/plugin-basic-ui";
 import {Checkbox} from "../components/ui/checkbox";
+import {useEffect, useState} from "react";
+import firebase from "../config";
 
 const roleInfoList = [
     {
@@ -41,31 +43,102 @@ const getArray = (title: string) => {
     return checkList;
 }
 
+type roleDatType = {
+    roleName: string;
+    checklist: string[];
+}
+
+const setRolesData = async () => {
+    const rolesData: {} = roleInfoList.reduce((acc, roleInfo) => {
+        // @ts-ignore
+        acc[roleInfo.role] = {
+            roleName: roleInfo.role,
+            checklist: roleInfo.checklist.reduce((acc, task) => {
+                // @ts-ignore
+                acc[task] = false;
+                return acc;
+            }, {}),
+        };
+        return acc;
+    }, []);
+    
+    await firebase.firestore().collection('rolesConfig').doc('fixedRoles').set(rolesData);
+};
+
+type testButtonProps = {
+    state: boolean;
+    label: string;
+    title: string;
+}
+
+const TestButton = ({state, label, title} : testButtonProps) => {
+    const updateTaskStatus = async (roleID, task, newStatus) => {
+        const fixedRolesDocRef = firebase.firestore().collection('rolesConfig').doc('fixedRoles');
+        await fixedRolesDocRef.update({
+            [`${roleID}.checklist.${task}`]: newStatus
+        });
+        
+        console.log(roleID, task, newStatus)
+    };
+    console.log(state, label, title)
+    
+    
+    return(
+        
+        <div className="items-top flex space-x-2 px-[24px] py-[8px]">
+            <Checkbox id="terms1" checked={state} onClick={() => {
+                updateTaskStatus(title, label, !state);
+            }}/>
+            <div className="grid gap-1.5 leading-none">
+                <label
+                    htmlFor="terms1"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                    {label}
+                </label>
+            </div>
+        </div>
+    )
+}
+
+
+
 type ArticleParams= {
     title: string;
 };
 const DetailPage: ActivityComponentType<ArticleParams> = ({ params }) => {
-    const checkList = getArray(params.title);
+    const [isLoading, setIsLoading] = useState(true);
+    const [checkList, setCheckList] = useState<string[]>([]);
+    const [stateList, setStateList] = useState<boolean[]>([]);
+    
+    const fetchData = async () => {
+        const fixedRolesDoc = await firebase.firestore().collection('rolesConfig').doc('fixedRoles').get();
+        const rolesData = fixedRolesDoc.data() as {}
+        const testArr = Object.values(rolesData) as roleDatType[];
+        const test = testArr.find((roleData) => roleData.roleName === params.title)?.checklist ?? []
+        console.log(test);
+        setCheckList(Object.keys(test));
+        setStateList(Object.values(test) as unknown as boolean[]);
+        setIsLoading(false);
+    };
+    
+    useEffect(()=> {
+        fetchData();
+    }, [])
+    
+    if(isLoading){
+        return <div>로딩 중...</div>
+    }
     
     return (
         <AppScreen appBar={{ title: params.title }}>
-            <form className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
                 {checkList.map((label, index) => {
                     return (
-                        <div className="items-top flex space-x-2">
-                            <Checkbox id="terms1" />
-                            <div className="grid gap-1.5 leading-none">
-                                <label
-                                    htmlFor="terms1"
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                    {label}
-                                </label>
-                            </div>
-                        </div>
+                        <TestButton state={stateList[index]}label={label} title={params.title}/>
                     )
                 })}
-            </form>
+            </div>
         </AppScreen>
     );
 };
