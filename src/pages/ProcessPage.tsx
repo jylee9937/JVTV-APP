@@ -4,11 +4,12 @@ import {Checkbox} from "../components/ui/checkbox";
 import {useCallback, useEffect, useState} from "react";
 import firebase from "../config";
 import {Button} from "@/components/ui/button";
+import {useInterval} from "@toss/react";
 
 const roleInfoList = [
     {
         role: "3캠",
-        checklist: ["삼각대 챙기기", "삼각대 설치하기",]
+        checklist: ["삼각대 챙기기", "삼각대 설치하기", "의자 챙기기"]
     },
     {
         role: "4캠",
@@ -20,7 +21,7 @@ const roleInfoList = [
     },
     {
         role: "8캠",
-        checklist: ["지미집 콘솔 확인"]
+        checklist: ["지미집 콘솔 확인", "배터리 수거"]
     },
     {
         role: "중계",
@@ -100,7 +101,6 @@ const TestButton = ({state, label} : testButtonProps) => {
 }
 
 const ProcessPage: ActivityComponentType = () => {
-    const [isLoading, setIsLoading] = useState(true);
     const [totalArr, setTotalArr] = useState<roleDatType[]>([]);
     
     const fetchData = async () => {
@@ -111,14 +111,14 @@ const ProcessPage: ActivityComponentType = () => {
         // const test = testArr.find((roleData) => roleData.roleName === params.title)?.checklist ?? []
         // setCheckList(Object.keys(test));
         // setStateList(Object.values(test) as unknown as boolean[]);
-        setIsLoading(false);
+        console.log("실행")
     };
     
-    useEffect(()=> {
-        fetchData();
-    }, [])
+    useInterval(fetchData, {
+        delay: 5000
+    });
     
-    if(isLoading){
+    if(totalArr.length === 0){
         return <div>로딩 중...</div>
     }
     
